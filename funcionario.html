@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TurnoMed - Mis Turnos</title>
+    <link rel="stylesheet" href="calendario.css">
+</head>
+<body class="funcionario-view">
+    <div class="app-header">
+        <h1 class="app-title">TurnoMed</h1>
+        <p class="app-subtitle">Mis Turnos</p>
+    </div>
+
+    <nav class="top-nav">
+        <a href="index.html" class="back-btn">← Volver al Inicio</a>
+    </nav>
+    
+    <div class="calendar-container">
+        <div class="user-info">
+            <h2 id="nombreFuncionario"></h2>
+            <span id="rutFuncionario"></span>
+        </div>
+        
+        <div class="filters-container">
+            <div class="filter-group">
+                <label for="monthSelector">Mes:</label>
+                <select id="monthSelector" class="filter-select">
+                    <option value="1">Enero</option>
+                    <option value="2">Febrero</option>
+                    <option value="3">Marzo</option>
+                    <option value="4" selected>Abril</option>
+                    <option value="5">Mayo</option>
+                    <option value="6">Junio</option>
+                    <option value="7">Julio</option>
+                    <option value="8">Agosto</option>
+                    <option value="9">Septiembre</option>
+                    <option value="10">Octubre</option>
+                    <option value="11">Noviembre</option>
+                    <option value="12">Diciembre</option>
+                </select>
+            </div>
+            
+            <div class="filter-group">
+                <label for="areaFilter">Área:</label>
+                <select id="areaFilter" class="filter-select">
+                    <option value="">Todas las áreas</option>
+                    <option value="Urgencias">Urgencias</option>
+                    <option value="Pediatría">Pediatría</option>
+                    <option value="Cirugía">Cirugía</option>
+                    <option value="Cardiología">Cardiología</option>
+                    <option value="Neurología">Neurología</option>
+                </select>
+            </div>
+            
+            <button id="resetFilters" class="btn btn-small">Limpiar filtros</button>
+        </div>
+        
+        <div class="calendar-header">
+            <button id="prevMonth" class="btn">‹ Anterior</button>
+            <h2 id="currentMonth"></h2>
+            <button id="nextMonth" class="btn">Siguiente ›</button>
+        </div>
+        
+        <div class="calendar-grid" id="calendarBody"></div>
+    </div>
+
+    <script src="calendario.js"></script>
+</body>
+</html>

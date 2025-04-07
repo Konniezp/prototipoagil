@@ -257,10 +257,10 @@ function initFuncionarioCalendar() {
 
     const misTurnos = [
         { fecha: "2025-04-04", area: "Urgencias", horario: "08:00 - 16:00" },
-        { fecha: "2025-04-12", area: "Pediatría", horario: "16:00 - 00:00" },
+        { fecha: "2025-04-12", area: "Urgencias", horario: "16:00 - 00:00" },
         { fecha: "2025-04-15", area: "Urgencias", horario: "16:00 - 00:00" },
-        { fecha: "2025-04-20", area: "Cardiología", horario: "08:00 - 16:00" },
-        { fecha: "2025-05-03", area: "Cirugía", horario: "00:00 - 08:00" }
+        { fecha: "2025-04-20", area: "Urgencias", horario: "08:00 - 16:00" },
+        { fecha: "2025-05-03", area: "Urgencias", horario: "00:00 - 08:00" }
     ];
 
     document.getElementById('nombreFuncionario').textContent = funcionarioActual.nombre;

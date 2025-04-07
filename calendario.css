@@ -360,7 +360,47 @@ footer {
     color: #777;
     font-size: 0.9rem;
 }
+/* ... (otros estilos se mantienen igual) ... */
 
+/* Ajustes para los botones de navegación */
+.calendar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.calendar-nav {
+    display: flex;
+    gap: 10px;
+    width: 100%;
+    justify-content: center;
+    order: 2; /* Mueve la navegación abajo */
+}
+
+.month-title {
+    width: 100%;
+    text-align: center;
+    order: 1; /* Mueve el título arriba */
+    margin-bottom: 10px;
+}
+
+/* Ajustes para vista móvil */
+@media (max-width: 480px) {
+    .calendar-header {
+        flex-direction: column;
+    }
+    
+    .calendar-nav {
+        order: 2;
+    }
+    
+    .month-title {
+        order: 1;
+    }
+}
 /* Responsive */
 @media (max-width: 768px) {
     .role-cards {

@@ -374,3 +374,101 @@ function showNotification(message, showUndoButton = false) {
     undoButton.style.display = showUndoButton ? 'block' : 'none';
     notification.classList.remove('hidden');
 }
+
+// Historia 7 solicitud de cambio
+
+document.addEventListener('DOMContentLoaded', function() {
+            // Seleccionar turno
+            const botonesSeleccionar = document.querySelectorAll('.seleccionar-turno');
+            const formularioCambio = document.getElementById('formulario-cambio');
+            const turnoSeleccionadoInfo = document.getElementById('turno-seleccionado-info');
+            
+            botonesSeleccionar.forEach(boton => {
+                boton.addEventListener('click', function() {
+                    const turnoItem = this.closest('.turno-item');
+                    const fecha = turnoItem.querySelector('.turno-date').textContent;
+                    const horario = turnoItem.querySelector('.shift p:first-child').textContent;
+                    
+                    turnoSeleccionadoInfo.textContent = `${fecha}, ${horario}`;
+                    formularioCambio.style.display = 'block';
+                    
+                    // Scroll al formulario
+                    formularioCambio.scrollIntoView({ behavior: 'smooth' });
+                });
+            });
+            
+            // Contador de caracteres para el motivo
+            const motivoCambio = document.getElementById('motivo-cambio');
+            const contadorCaracteres = document.getElementById('contador-caracteres');
+            
+            motivoCambio.addEventListener('input', function() {
+                const caracteresRestantes = 200 - this.value.length;
+                contadorCaracteres.textContent = `${caracteresRestantes} caracteres restantes`;
+            });
+            
+            // Verificar disponibilidad
+            const verificarDisponibilidad = document.getElementById('verificar-disponibilidad');
+            const mensajeDisponibilidad = document.getElementById('mensaje-disponibilidad');
+            
+            verificarDisponibilidad.addEventListener('click', function() {
+                // Aquí iría la lógica para verificar solapamiento con otros turnos
+                const nuevaFecha = document.getElementById('nueva-fecha').value;
+                const nuevoHorario = document.getElementById('nuevo-horario').value;
+                
+                if (!nuevaFecha || !nuevoHorario) {
+                    mensajeDisponibilidad.textContent = 'Por favor, seleccione fecha y horario';
+                    mensajeDisponibilidad.style.backgroundColor = '#ffecec';
+                    mensajeDisponibilidad.style.color = '#e74c3c';
+                } else {
+                    // Simulación de verificación exitosa
+                    mensajeDisponibilidad.textContent = 'Horario disponible en su área. No hay solapamiento con otros turnos.';
+                    mensajeDisponibilidad.style.backgroundColor = '#e8f8f5';
+                    mensajeDisponibilidad.style.color = '#2ecc71';
+                }
+                
+                mensajeDisponibilidad.style.display = 'block';
+            });
+            
+            // Enviar solicitud
+            const solicitudForm = document.getElementById('solicitud-cambio-form');
+            const modalConfirmacion = document.getElementById('modal-confirmacion');
+            const cerrarModal = document.getElementById('cerrar-modal');
+            const notificacion = document.getElementById('notificacion');
+            const notificacionMensaje = document.getElementById('notificacion-mensaje');
+            
+            solicitudForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                // Mostrar modal de confirmación
+                modalConfirmacion.style.display = 'flex';
+            });
+            
+            // Cerrar modal
+            cerrarModal.addEventListener('click', function() {
+                modalConfirmacion.style.display = 'none';
+                
+                // Mostrar notificación
+                notificacionMensaje.textContent = 'Solicitud enviada correctamente';
+                notificacion.style.backgroundColor = '#2ecc71';
+                notificacion.classList.remove('hidden');
+                
+                // Ocultar notificación después de 5 segundos
+                setTimeout(() => {
+                    notificacion.classList.add('hidden');
+                }, 5000);
+                
+                // Aquí iría la lógica para enviar la solicitud al servidor
+            });
+            
+            // Cerrar modal al hacer clic en la X
+            document.querySelector('.close').addEventListener('click', function() {
+                modalConfirmacion.style.display = 'none';
+            });
+            
+            // Cerrar modal al hacer clic fuera del contenido
+            window.addEventListener('click', function(event) {
+                if (event.target === modalConfirmacion) {
+                    modalConfirmacion.style.display = 'none';
+                }
+            });
+        });

@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prototipo: Gestión de Cuentas de Usuarios - TurnoMed</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 20px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 20px;
+        }
+        .form-section, .users-section {
+            margin-bottom: 30px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input, select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        button {
+            background-color: #28a745;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        button:hover {
+            background-color: #218838;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            padding: 10px;
+            border: 1px solid #ddd;
+            text-align: left;
+        }
+        th {
+            background-color: #333;
+            color: white;
+        }
+        .action-buttons button {
+            margin-right: 5px;
+            padding: 5px 10px;
+            font-size: 14px;
+        }
+        .edit-btn {
+            background-color: #007bff;
+        }
+        .edit-btn:hover {
+            background-color: #0056b3;
+        }
+        .delete-btn {
+            background-color: #dc3545;
+        }
+        .delete-btn:hover {
+            background-color: #c82333;
+        }
+        #notification {
+            margin-top: 20px;
+            padding: 10px;
+            border-radius: 4px;
+            display: none;
+        }
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+
+        /* Responsividad */
+        @media (max-width: 768px) {
+            .container {
+                margin: 10px;
+                padding: 15px;
+            }
+            table, th, td {
+                font-size: 14px;
+            }
+            .action-buttons button {
+                padding: 5px;
+                font-size: 12px;
+            }
+        }
+        @media (max-width: 480px) {
+            table {
+                display: block;
+                overflow-x: auto;
+            }
+            .form-group {
+                margin-bottom: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Gestión de Cuentas de Usuarios</h1>
+
+        
+        <div class="form-section">
+            <h2>Crear Nuevo Empleado</h2>
+            <form id="userForm">
+                <div class="form-group">
+                    <label for="name">Nombre:</label>
+                    <input type="text" id="name" required>
+                </div>
+                <div class="form-group">
+                    <label for="email">Correo:</label>
+                    <input type="email" id="email" required>
+                </div>
+                <div class="form-group">
+                    <label for="position">Cargo:</label>
+                    <input type="text" id="position" required>
+                </div>
+                <div class="form-group">
+                    <label for="area">Área de Trabajo:</label>
+                    <select id="area" required>
+                        <option value="">Seleccionar Área</option>
+                        <option value="Urgencias">Urgencias</option>
+                        <option value="Pediatría">Pediatría</option>
+                        <option value="Cirugía">Cirugía</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="role">Rol:</label>
+                    <select id="role" required>
+                        <option value="">Seleccionar Rol</option>
+                        <option value="Administrador">Administrador</option>
+                        <option value="Coordinador">Coordinador</option>
+                        <option value="Funcionario">Funcionario</option>
+                    </select>
+                </div>
+                <button type="submit">Crear Cuenta</button>
+            </form>
+        </div>
+
+        
+        <div class="users-section">
+            <h2>Lista de Usuarios</h2>
+            <table id="usersTable">
+                <thead>
+                    <tr>
+                        <th>Nombre</th>
+                        <th>Correo</th>
+                        <th>Cargo</th>
+                        <th>Área</th>
+                        <th>Rol</th>
+                        <th>Estado</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody id="usersTableBody">
+                    
+                </tbody>
+            </table>
+        </div>
+
+        <div id="notification"></div>
+    </div>
+
+    <script>
+        // Datos simulados de usuarios
+        let users = [
+            { id: 1, name: "Juan Pérez", email: "juan.perez@hospital.com", position: "Médico", area: "Urgencias", role: "Funcionario", active: true },
+            { id: 2, name: "María Gómez", email: "maria.gomez@hospital.com", position: "Enfermera", area: "Pediatría", role: "Funcionario", active: true },
+            { id: 3, name: "Ana López", email: "ana.lopez@hospital.com", position: "Administrativa", area: "Cirugía", role: "Coordinador", active: true }
+        ];
+
+        
+        function renderUsers() {
+            const tableBody = document.getElementById("usersTableBody");
+            tableBody.innerHTML = "";
+            users.forEach(user => {
+                const row = document.createElement("tr");
+                row.innerHTML = `
+                    <td>${user.name}</td>
+                    <td>${user.email}</td>
+                    <td>${user.position}</td>
+                    <td>${user.area}</td>
+                    <td>${user.role}</td>
+                    <td>${user.active ? "Activo" : "Inactivo"}</td>
+                    <td class="action-buttons">
+                        <button class="edit-btn" onclick="editUser(${user.id})">Editar</button>
+                        <button class="delete-btn" onclick="deleteUser(${user.id})">${user.active ? "Eliminar" : "Restaurar"}</button>
+                    </td>
+                `;
+                tableBody.appendChild(row);
+            });
+        }
+
+        
+        document.getElementById("userForm").addEventListener("submit", function(event) {
+            event.preventDefault();
+
+            const name = document.getElementById("name").value;
+            const email = document.getElementById("email").value;
+            const position = document.getElementById("position").value;
+            const area = document.getElementById("area").value;
+            const role = document.getElementById("role").value;
+            const notification = document.getElementById("notification");
+
+            
+            if (!name || !email || !position || !area || !role) {
+                notification.className = "error";
+                notification.textContent = "Por favor, complete todos los campos.";
+                notification.style.display = "block";
+                return;
+            }
+
+            
+            setTimeout(() => {
+                const newUser = {
+                    id: users.length + 1,
+                    name,
+                    email,
+                    position,
+                    area,
+                    role,
+                    active: true
+                };
+                users.push(newUser);
+                renderUsers();
+                document.getElementById("userForm").reset();
+                notification.className = "success";
+                notification.textContent = "Usuario creado exitosamente.";
+                notification.style.display = "block";
+            }, 500); // Simulación de 0.5 segundos
+        });
+
+        
+        function editUser(userId) {
+            const user = users.find(u => u.id === userId);
+            if (!user) return;
+
+            const newName = prompt("Nuevo nombre:", user.name);
+            const newEmail = prompt("Nuevo correo:", user.email);
+            const newPosition = prompt("Nuevo cargo:", user.position);
+            const newArea = prompt("Nueva área:", user.area);
+            const newRole = prompt("Nuevo rol:", user.role);
+
+            if (newName && newEmail && newPosition && newArea && newRole) {
+                setTimeout(() => {
+                    user.name = newName;
+                    user.email = newEmail;
+                    user.position = newPosition;
+                    user.area = newArea;
+                    user.role = newRole;
+                    renderUsers();
+                    const notification = document.getElementById("notification");
+                    notification.className = "success";
+                    notification.textContent = "Usuario modificado exitosamente.";
+                    notification.style.display = "block";
+                }, 500); // Simulación de 0.5 segundos
+            }
+        }
+
+        
+        function deleteUser(userId) {
+            const user = users.find(u => u.id === userId);
+            if (!user) return;
+
+            setTimeout(() => {
+                user.active = !user.active; // Alternar estado (eliminar/restaurar)
+                renderUsers();
+                const notification = document.getElementById("notification");
+                notification.className = "success";
+                notification.textContent = user.active ? "Usuario restaurado exitosamente." : "Usuario eliminado. No podrá acceder al sistema.";
+                notification.style.display = "block";
+            }, 500); // Simulación de 0.5 segundos
+        }
+
+        
+        renderUsers();
+    </script>
+</body>
+</html>

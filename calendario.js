@@ -22,6 +22,19 @@ function getFirstDayOfMonth(month, year) {
     return day === 0 ? 6 : day - 1;
 }
 
+function showNotification(message, isError = false) {
+    const notification = document.getElementById('notification');
+    notification.textContent = message;
+    notification.className = `notification ${isError ? 'error' : ''}`;
+    notification.classList.remove('hidden');
+
+    setTimeout(() => {
+        if (!notification.classList.contains('hidden')) {
+            notification.classList.add('hidden');
+        }
+    }, 5000);
+}
+
 // ===== FUNCIONALIDAD GENERAL =====
 document.addEventListener('DOMContentLoaded', function() {
     highlightActiveLink();
@@ -32,6 +45,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     if (document.querySelector('.funcionario-view')) {
         initFuncionarioCalendar();
+        createShiftChangeForm();
     }
 });
 
@@ -121,7 +135,6 @@ function initCoordinadorCalendar() {
         }
     }
 
-    // ... (resto del código de coordinador se mantiene igual)
     function setupCoordinadorEventListeners() {
         document.getElementById('prevMonth').addEventListener('click', () => {
             currentMonth = currentMonth === 1 ? 12 : currentMonth - 1;
@@ -267,7 +280,6 @@ function initFuncionarioCalendar() {
     document.getElementById('nombreFuncionario').textContent = funcionarioActual.nombre;
     document.getElementById('rutFuncionario').textContent = funcionarioActual.rut;
     
-    createShiftChangeForm();
     updateFuncionarioCalendar(currentMonth, currentYear);
     setupFuncionarioEventListeners();
 
@@ -296,22 +308,19 @@ function initFuncionarioCalendar() {
         const firstDay = getFirstDayOfMonth(month, year);
         const totalDays = daysInMonth(month, year);
 
-        // Obtener fecha actual
+        // Obtener fecha actual y rango de fechas permitidas (hoy + 5 días siguientes)
         const today = new Date();
         today.setHours(0, 0, 0, 0);
         const currentDateStr = formatDate(today.getFullYear(), today.getMonth() + 1, today.getDate());
+        
+        const maxChangeDate = new Date(today);
+        maxChangeDate.setDate(today.getDate() + 5);
+        const maxChangeDateStr = formatDate(maxChangeDate.getFullYear(), maxChangeDate.getMonth() + 1, maxChangeDate.getDate());
 
         for (let i = 0; i < firstDay; i++) {
             const emptyCell = document.createElement('div');
             emptyCell.className = 'calendar-day empty';
             calendarBody.appendChild(emptyCell);
-        }
-
-        const next5Days = [];
-        for (let i = 1; i <= 5; i++) {
-            const nextDay = new Date(today);
-            nextDay.setDate(today.getDate() + i);
-            next5Days.push(nextDay.toISOString().split('T')[0]);
         }
 
         for (let day = 1; day <= totalDays; day++) {
@@ -337,36 +346,39 @@ function initFuncionarioCalendar() {
                     `;
                     cell.appendChild(turnoDiv);
                     
-                    if (next5Days.includes(dateStr)) {
-                        cell.classList.add('available-for-change');
-                        cell.dataset.shiftDate = dateStr;
-                        cell.dataset.shiftDetails = `${turno.area} - ${turno.horario}`;
+                    // Mostrar botón SOLO en el día actual
+                    if (dateStr === currentDateStr) {
+                        const changeBtn = document.createElement('button');
+                        changeBtn.className = 'btn-change-shift';
+                        changeBtn.innerHTML = 'Solicitar Cambio';
+                        changeBtn.dataset.shiftDate = dateStr;
+                        changeBtn.dataset.shiftDetails = `${turno.area} - ${turno.horario}`;
+                        turnoDiv.appendChild(changeBtn);
+                        
+                        changeBtn.addEventListener('click', function() {
+                            const shiftDate = this.dataset.shiftDate;
+                            const shiftDetails = this.dataset.shiftDetails;
+                            
+                            document.getElementById('originalShiftDate').value = shiftDate;
+                            document.getElementById('originalShiftDetails').value = shiftDetails;
+                            
+                            // Configurar el rango de fechas permitidas
+                            const tomorrow = new Date();
+                            tomorrow.setDate(tomorrow.getDate() + 1);
+                            document.getElementById('newShiftDate').min = tomorrow.toISOString().split('T')[0];
+                            document.getElementById('newShiftDate').max = maxChangeDateStr;
+                            
+                            document.getElementById('shiftChangeForm').style.display = 'block';
+                            document.getElementById('shiftChangeForm').scrollIntoView({ behavior: 'smooth' });
+                        });
                     }
                 });
             }
 
             calendarBody.appendChild(cell);
         }
-
-        document.querySelectorAll('.calendar-day.available-for-change').forEach(dayCell => {
-            dayCell.addEventListener('click', function() {
-                const shiftDate = this.dataset.shiftDate;
-                const shiftDetails = this.dataset.shiftDetails;
-                
-                document.getElementById('originalShiftDate').value = shiftDate;
-                document.getElementById('originalShiftDetails').value = shiftDetails;
-                
-                const tomorrow = new Date();
-                tomorrow.setDate(tomorrow.getDate() + 1);
-                document.getElementById('newShiftDate').min = tomorrow.toISOString().split('T')[0];
-                
-                document.getElementById('shiftChangeForm').style.display = 'block';
-                document.getElementById('shiftChangeForm').scrollIntoView({ behavior: 'smooth' });
-            });
-        });
     }
 
-    // ... (resto del código de funcionario se mantiene igual)
     function setupFuncionarioEventListeners() {
         document.getElementById('prevMonth').addEventListener('click', () => {
             currentMonth = currentMonth === 1 ? 12 : currentMonth - 1;
@@ -399,6 +411,7 @@ function initFuncionarioCalendar() {
         const form = document.createElement('div');
         form.className = 'change-shift-form';
         form.id = 'shiftChangeForm';
+        form.style.display = 'none';
         form.innerHTML = `
             <h3>Solicitud de Cambio de Turno</h3>
             <form id="shiftChangeRequest">
@@ -413,6 +426,7 @@ function initFuncionarioCalendar() {
                 <div class="form-group">
                     <label for="newShiftDate">Nueva fecha propuesta:</label>
                     <input type="date" id="newShiftDate" required>
+                    <p class="date-range-info">(Puede seleccionar fechas entre mañana y 5 días a partir de hoy)</p>
                 </div>
                 <div class="form-group">
                     <label for="newShiftTime">Nuevo horario propuesto:</label>
@@ -432,6 +446,7 @@ function initFuncionarioCalendar() {
                 <div class="form-actions">
                     <button type="button" id="checkAvailability" class="btn btn-small">Verificar Disponibilidad</button>
                     <button type="submit" class="btn">Enviar Solicitud</button>
+                    <button type="button" id="cancelRequest" class="btn btn-cancel">Cancelar</button>
                 </div>
             </form>
         `;
@@ -445,6 +460,9 @@ function initFuncionarioCalendar() {
         
         document.getElementById('checkAvailability').addEventListener('click', checkShiftAvailability);
         document.getElementById('shiftChangeRequest').addEventListener('submit', submitShiftChangeRequest);
+        document.getElementById('cancelRequest').addEventListener('click', function() {
+            document.getElementById('shiftChangeForm').style.display = 'none';
+        });
     }
 
     function checkShiftAvailability() {
@@ -492,30 +510,11 @@ function initFuncionarioCalendar() {
         console.log('Solicitud enviada:', { originalDate, newDate, newTime, reason });
         showNotification('Solicitud de cambio enviada al coordinador');
         document.getElementById('shiftChangeForm').style.display = 'none';
-    }
-
-    function showNotification(message, isError = false) {
-        const notification = document.createElement('div');
-        notification.className = `notification ${isError ? 'error' : ''}`;
-        notification.innerHTML = `
-            ${message}
-            <span class="notification-close">×</span>
-        `;
         
-        document.body.appendChild(notification);
-        
-        setTimeout(() => notification.classList.remove('hidden'), 10);
-        
-        notification.querySelector('.notification-close').addEventListener('click', () => {
-            notification.classList.add('hidden');
-            setTimeout(() => notification.remove(), 300);
-        });
-        
-        setTimeout(() => {
-            if (notification.parentNode) {
-                notification.classList.add('hidden');
-                setTimeout(() => notification.remove(), 300);
-            }
-        }, 5000);
+        // Resetear el formulario
+        document.getElementById('shiftChangeRequest').reset();
+        document.getElementById('charCount').textContent = '200';
+        availabilityCheck.style.display = 'none';
+        availabilityCheck.className = 'availability-check';
     }
 }

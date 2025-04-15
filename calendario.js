@@ -62,7 +62,6 @@ document.addEventListener('DOMContentLoaded', function() {
     
     if (document.querySelector('.funcionario-view')) {
         initFuncionarioCalendar();
-        createShiftChangeForm();
     }
 });
 
@@ -297,6 +296,7 @@ function initFuncionarioCalendar() {
     document.getElementById('nombreFuncionario').textContent = funcionarioActual.nombre;
     document.getElementById('rutFuncionario').textContent = funcionarioActual.rut;
     
+    createShiftChangeForm();
     updateFuncionarioCalendar(currentMonth, currentYear);
     setupFuncionarioEventListeners();
 
@@ -361,17 +361,20 @@ function initFuncionarioCalendar() {
                         <p><strong>${turno.area}</strong></p>
                         <p>${turno.horario}</p>
                     `;
-                    cell.appendChild(turnoDiv);
                     
-                    // Mostrar botón SOLO en el día actual
+                    // Solo añadir botón para el día actual
                     if (dateStr === currentDateStr) {
                         const changeBtn = document.createElement('button');
                         changeBtn.className = 'btn-change-shift';
-                        changeBtn.innerHTML = 'Solicitar Cambio';
-                        changeBtn.dataset.shiftDate = dateStr;
-                        changeBtn.dataset.shiftDetails = `${turno.area} - ${turno.horario}`;
+                        changeBtn.textContent = 'Solicitar Cambio';
+                        changeBtn.addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            openShiftChangeForm(dateStr, `${turno.area} - ${turno.horario}`);
+                        });
                         turnoDiv.appendChild(changeBtn);
                     }
+                    
+                    cell.appendChild(turnoDiv);
                 });
             }
 
@@ -411,11 +414,17 @@ function initFuncionarioCalendar() {
     }
 
     function createShiftChangeForm() {
+        const formContainer = document.createElement('div');
+        formContainer.className = 'change-shift-form-container';
+        formContainer.id = 'shiftChangeFormContainer';
+        formContainer.style.display = 'none';
+        
         const form = document.createElement('div');
         form.className = 'change-shift-form';
-        form.id = 'shiftChangeForm';
         form.innerHTML = `
             <h3>Solicitud de Cambio de Turno</h3>
+            <span class="close-form" id="closeShiftForm">×</span>
+            <p class="date-range-info"></p>
             <form id="shiftChangeRequest">
                 <div class="form-group">
                     <label for="originalShiftDate">Fecha de turno original:</label>
@@ -428,7 +437,6 @@ function initFuncionarioCalendar() {
                 <div class="form-group">
                     <label for="newShiftDate">Nueva fecha propuesta:</label>
                     <input type="date" id="newShiftDate" required>
-                    <div class="date-range-info"></div>
                 </div>
                 <div class="form-group">
                     <label for="newShiftTime">Nuevo horario propuesto:</label>
@@ -452,7 +460,8 @@ function initFuncionarioCalendar() {
             </form>
         `;
         
-        document.querySelector('.calendar-container').appendChild(form);
+        formContainer.appendChild(form);
+        document.body.appendChild(formContainer);
         
         document.getElementById('changeReason').addEventListener('input', function() {
             const remaining = 200 - this.value.length;
@@ -461,16 +470,43 @@ function initFuncionarioCalendar() {
         
         document.getElementById('checkAvailability').addEventListener('click', checkShiftAvailability);
         document.getElementById('shiftChangeRequest').addEventListener('submit', submitShiftChangeRequest);
+        document.getElementById('closeShiftForm').addEventListener('click', () => {
+            document.getElementById('shiftChangeFormContainer').style.display = 'none';
+        });
     }
 
     function setupShiftChangeForm(minDateStr, maxDateStr) {
-        const form = document.getElementById('shiftChangeForm');
-        if (!form) return;
+        const dateInput = document.getElementById('newShiftDate');
+        if (!dateInput) return;
         
-        form.querySelector('#newShiftDate').min = minDateStr;
-        form.querySelector('#newShiftDate').max = maxDateStr;
-        form.querySelector('.date-range-info').textContent = 
-            `(Puede seleccionar fechas entre ${formatDisplayDate(minDateStr)} y ${formatDisplayDate(maxDateStr)})`;
+        dateInput.min = minDateStr;
+        dateInput.max = maxDateStr;
+        document.querySelector('.date-range-info').textContent = 
+            `Puedes seleccionar fechas entre ${formatDisplayDate(minDateStr)} y ${formatDisplayDate(maxDateStr)}`;
+    }
+
+    function openShiftChangeForm(dateStr, shiftDetails) {
+        const formContainer = document.getElementById('shiftChangeFormContainer');
+        
+        // Configurar los valores del formulario
+        document.getElementById('originalShiftDate').value = formatDisplayDate(dateStr);
+        document.getElementById('originalShiftDetails').value = shiftDetails;
+        
+        // Configurar rango de fechas permitido
+        const today = new Date();
+        const maxDate = new Date(today);
+        maxDate.setDate(today.getDate() + 5);
+        
+        const dateInput = document.getElementById('newShiftDate');
+        dateInput.min = today.toISOString().split('T')[0];
+        dateInput.max = maxDate.toISOString().split('T')[0];
+        
+        // Mostrar información del rango de fechas
+        document.querySelector('.date-range-info').textContent = 
+            `Puedes seleccionar fechas entre hoy y el ${formatDisplayDate(maxDate.toISOString().split('T')[0])}`;
+        
+        // Mostrar el formulario
+        formContainer.style.display = 'flex';
     }
 
     function checkShiftAvailability() {
@@ -517,6 +553,6 @@ function initFuncionarioCalendar() {
         
         console.log('Solicitud enviada:', { originalDate, newDate, newTime, reason });
         showNotification('Solicitud de cambio enviada al coordinador');
-        document.getElementById('shiftChangeForm').style.display = 'none';
+        document.getElementById('shiftChangeFormContainer').style.display = 'none';
     }
 }

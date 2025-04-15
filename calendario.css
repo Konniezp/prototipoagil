@@ -257,6 +257,15 @@ body {
     color: #2c3e50;
 }
 
+.calendar-day.current-day {
+    background-color: #e6f7ff;
+    border: 2px solid #91d5ff;
+}
+
+.calendar-day.current-day .day-number {
+    font-weight: bold;
+    color: #1890ff;
+}
 .shift {
     background-color: #e8f4f8;
     border-left: 3px solid #3498db;

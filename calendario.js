@@ -296,7 +296,6 @@ function initFuncionarioCalendar() {
     document.getElementById('nombreFuncionario').textContent = funcionarioActual.nombre;
     document.getElementById('rutFuncionario').textContent = funcionarioActual.rut;
     
-    createShiftChangeForm();
     updateFuncionarioCalendar(currentMonth, currentYear);
     setupFuncionarioEventListeners();
 
@@ -369,7 +368,7 @@ function initFuncionarioCalendar() {
                         changeBtn.textContent = 'Solicitar Cambio';
                         changeBtn.addEventListener('click', (e) => {
                             e.stopPropagation();
-                            openShiftChangeForm(dateStr, `${turno.area} - ${turno.horario}`);
+                            openShiftChangeModal(dateStr, `${turno.area} - ${turno.horario}`);
                         });
                         turnoDiv.appendChild(changeBtn);
                     }
@@ -380,9 +379,36 @@ function initFuncionarioCalendar() {
 
             calendarBody.appendChild(cell);
         }
+    }
 
-        // Configurar el formulario con el rango de fechas permitido
-        setupShiftChangeForm(currentDateStr, maxChangeDateStr);
+    function openShiftChangeModal(dateStr, shiftDetails) {
+        const modal = document.getElementById('shiftChangeModal');
+        const today = new Date();
+        const maxDate = new Date(today);
+        maxDate.setDate(today.getDate() + 5);
+
+        // Configurar valores del formulario
+        document.getElementById('originalShiftDate').value = formatDisplayDate(dateStr);
+        document.getElementById('originalShiftDetails').value = shiftDetails;
+        
+        // Configurar rango de fechas permitido
+        const dateInput = document.getElementById('newShiftDate');
+        dateInput.min = today.toISOString().split('T')[0];
+        dateInput.max = maxDate.toISOString().split('T')[0];
+        dateInput.value = '';
+        
+        // Limpiar verificaciones anteriores
+        document.getElementById('availabilityCheck').textContent = '';
+        document.getElementById('newShiftTime').value = '';
+        document.getElementById('changeReason').value = '';
+        document.getElementById('charCount').textContent = '200';
+        
+        // Mostrar información de rango de fechas
+        document.querySelector('.date-range-info').textContent = 
+            `Puedes seleccionar entre ${formatDisplayDate(dateInput.min)} y ${formatDisplayDate(dateInput.max)}`;
+        
+        // Mostrar modal
+        modal.style.display = 'block';
     }
 
     function setupFuncionarioEventListeners() {
@@ -411,102 +437,20 @@ function initFuncionarioCalendar() {
             document.getElementById('areaFilter').value = '';
             updateFuncionarioCalendar(currentMonth, currentYear);
         });
-    }
 
-    function createShiftChangeForm() {
-        const formContainer = document.createElement('div');
-        formContainer.className = 'change-shift-form-container';
-        formContainer.id = 'shiftChangeFormContainer';
-        formContainer.style.display = 'none';
-        
-        const form = document.createElement('div');
-        form.className = 'change-shift-form';
-        form.innerHTML = `
-            <h3>Solicitud de Cambio de Turno</h3>
-            <span class="close-form" id="closeShiftForm">×</span>
-            <p class="date-range-info"></p>
-            <form id="shiftChangeRequest">
-                <div class="form-group">
-                    <label for="originalShiftDate">Fecha de turno original:</label>
-                    <input type="text" id="originalShiftDate" readonly>
-                </div>
-                <div class="form-group">
-                    <label for="originalShiftDetails">Detalles del turno original:</label>
-                    <input type="text" id="originalShiftDetails" readonly>
-                </div>
-                <div class="form-group">
-                    <label for="newShiftDate">Nueva fecha propuesta:</label>
-                    <input type="date" id="newShiftDate" required>
-                </div>
-                <div class="form-group">
-                    <label for="newShiftTime">Nuevo horario propuesto:</label>
-                    <select id="newShiftTime" required>
-                        <option value="">Seleccione un horario</option>
-                        <option value="08:00 - 16:00">08:00 - 16:00</option>
-                        <option value="16:00 - 00:00">16:00 - 00:00</option>
-                        <option value="00:00 - 08:00">00:00 - 08:00</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label for="changeReason">Motivo del cambio (máx. 200 caracteres):</label>
-                    <textarea id="changeReason" maxlength="200" required></textarea>
-                    <div class="char-counter"><span id="charCount">200</span> caracteres restantes</div>
-                </div>
-                <div id="availabilityCheck" class="availability-check" style="display: none;"></div>
-                <div class="form-actions">
-                    <button type="button" id="checkAvailability" class="btn btn-small">Verificar Disponibilidad</button>
-                    <button type="submit" class="btn">Enviar Solicitud</button>
-                </div>
-            </form>
-        `;
-        
-        formContainer.appendChild(form);
-        document.body.appendChild(formContainer);
-        
-        document.getElementById('changeReason').addEventListener('input', function() {
-            const remaining = 200 - this.value.length;
-            document.getElementById('charCount').textContent = remaining;
+        // Configurar evento para cerrar modal
+        document.querySelector('.close-modal').addEventListener('click', () => {
+            document.getElementById('shiftChangeModal').style.display = 'none';
         });
-        
-        document.getElementById('checkAvailability').addEventListener('click', checkShiftAvailability);
-        document.getElementById('shiftChangeRequest').addEventListener('submit', submitShiftChangeRequest);
-        document.getElementById('closeShiftForm').addEventListener('click', () => {
-            document.getElementById('shiftChangeFormContainer').style.display = 'none';
+
+        // Configurar evento para verificar disponibilidad
+        document.getElementById('checkAvailabilityBtn').addEventListener('click', checkShiftAvailability);
+
+        // Configurar evento para enviar formulario
+        document.getElementById('shiftChangeForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            submitShiftChangeRequest();
         });
-    }
-
-    function setupShiftChangeForm(minDateStr, maxDateStr) {
-        const dateInput = document.getElementById('newShiftDate');
-        if (!dateInput) return;
-        
-        dateInput.min = minDateStr;
-        dateInput.max = maxDateStr;
-        document.querySelector('.date-range-info').textContent = 
-            `Puedes seleccionar fechas entre ${formatDisplayDate(minDateStr)} y ${formatDisplayDate(maxDateStr)}`;
-    }
-
-    function openShiftChangeForm(dateStr, shiftDetails) {
-        const formContainer = document.getElementById('shiftChangeFormContainer');
-        
-        // Configurar los valores del formulario
-        document.getElementById('originalShiftDate').value = formatDisplayDate(dateStr);
-        document.getElementById('originalShiftDetails').value = shiftDetails;
-        
-        // Configurar rango de fechas permitido
-        const today = new Date();
-        const maxDate = new Date(today);
-        maxDate.setDate(today.getDate() + 5);
-        
-        const dateInput = document.getElementById('newShiftDate');
-        dateInput.min = today.toISOString().split('T')[0];
-        dateInput.max = maxDate.toISOString().split('T')[0];
-        
-        // Mostrar información del rango de fechas
-        document.querySelector('.date-range-info').textContent = 
-            `Puedes seleccionar fechas entre hoy y el ${formatDisplayDate(maxDate.toISOString().split('T')[0])}`;
-        
-        // Mostrar el formulario
-        formContainer.style.display = 'flex';
     }
 
     function checkShiftAvailability() {
@@ -515,7 +459,7 @@ function initFuncionarioCalendar() {
         const availabilityCheck = document.getElementById('availabilityCheck');
         
         if (!newDate || !newTime) {
-            showNotification('Por favor seleccione fecha y horario', true);
+            showNotification('Por favor complete fecha y horario', true);
             return;
         }
         
@@ -526,23 +470,22 @@ function initFuncionarioCalendar() {
         availabilityCheck.style.display = 'block';
         
         if (isAvailable) {
-            availabilityCheck.textContent = 'Turno disponible. No hay conflictos con otros turnos.';
+            availabilityCheck.textContent = '✅ Turno disponible';
             availabilityCheck.className = 'availability-check available';
         } else {
             const conflictingShift = allShifts.find(shift => 
                 shift.fecha === newDate && shift.horario === newTime
             );
-            availabilityCheck.textContent = `Turno no disponible. Ya asignado a ${conflictingShift.funcionario}.`;
+            availabilityCheck.textContent = `❌ Turno ocupado por ${conflictingShift.funcionario}`;
             availabilityCheck.className = 'availability-check unavailable';
         }
     }
 
-    function submitShiftChangeRequest(e) {
-        e.preventDefault();
-        
+    function submitShiftChangeRequest() {
         const availabilityCheck = document.getElementById('availabilityCheck');
+        
         if (availabilityCheck.classList.contains('unavailable')) {
-            showNotification('No puede solicitar un turno que ya está asignado', true);
+            showNotification('No puede solicitar un turno ya asignado', true);
             return;
         }
         
@@ -551,8 +494,20 @@ function initFuncionarioCalendar() {
         const newTime = document.getElementById('newShiftTime').value;
         const reason = document.getElementById('changeReason').value;
         
-        console.log('Solicitud enviada:', { originalDate, newDate, newTime, reason });
-        showNotification('Solicitud de cambio enviada al coordinador');
-        document.getElementById('shiftChangeFormContainer').style.display = 'none';
+        if (!newDate || !newTime || !reason) {
+            showNotification('Complete todos los campos', true);
+            return;
+        }
+        
+        // Aquí iría la lógica para enviar la solicitud
+        console.log('Solicitud enviada:', { 
+            originalDate, 
+            newDate, 
+            newTime, 
+            reason 
+        });
+        
+        showNotification('Solicitud enviada al coordinador');
+        document.getElementById('shiftChangeModal').style.display = 'none';
     }
 }

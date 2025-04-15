@@ -22,6 +22,36 @@ function getFirstDayOfMonth(month, year) {
     return day === 0 ? 6 : day - 1;
 }
 
+function showNotification(message, isError = false) {
+    const notification = document.createElement('div');
+    notification.className = `notification ${isError ? 'error' : ''}`;
+    notification.innerHTML = `
+        ${message}
+        <span class="notification-close">×</span>
+    `;
+    
+    document.body.appendChild(notification);
+    
+    setTimeout(() => notification.classList.remove('hidden'), 10);
+    
+    notification.querySelector('.notification-close').addEventListener('click', () => {
+        notification.classList.add('hidden');
+        setTimeout(() => notification.remove(), 300);
+    });
+    
+    setTimeout(() => {
+        if (notification.parentNode) {
+            notification.classList.add('hidden');
+            setTimeout(() => notification.remove(), 300);
+        }
+    }, 5000);
+}
+
+function formatDisplayDate(dateStr) {
+    const [year, month, day] = dateStr.split('-');
+    return `${day}/${month}/${year}`;
+}
+
 // ===== FUNCIONALIDAD GENERAL =====
 document.addEventListener('DOMContentLoaded', function() {
     highlightActiveLink();
@@ -32,6 +62,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     if (document.querySelector('.funcionario-view')) {
         initFuncionarioCalendar();
+        createShiftChangeForm();
     }
 });
 
@@ -121,7 +152,6 @@ function initCoordinadorCalendar() {
         }
     }
 
-    // ... (resto del código de coordinador se mantiene igual)
     function setupCoordinadorEventListeners() {
         document.getElementById('prevMonth').addEventListener('click', () => {
             currentMonth = currentMonth === 1 ? 12 : currentMonth - 1;
@@ -267,7 +297,6 @@ function initFuncionarioCalendar() {
     document.getElementById('nombreFuncionario').textContent = funcionarioActual.nombre;
     document.getElementById('rutFuncionario').textContent = funcionarioActual.rut;
     
-    createShiftChangeForm();
     updateFuncionarioCalendar(currentMonth, currentYear);
     setupFuncionarioEventListeners();
 
@@ -296,22 +325,19 @@ function initFuncionarioCalendar() {
         const firstDay = getFirstDayOfMonth(month, year);
         const totalDays = daysInMonth(month, year);
 
-        // Obtener fecha actual
+        // Obtener fecha actual y rango de fechas permitidas (hoy + 5 días siguientes)
         const today = new Date();
         today.setHours(0, 0, 0, 0);
         const currentDateStr = formatDate(today.getFullYear(), today.getMonth() + 1, today.getDate());
+        
+        const maxChangeDate = new Date(today);
+        maxChangeDate.setDate(today.getDate() + 5);
+        const maxChangeDateStr = formatDate(maxChangeDate.getFullYear(), maxChangeDate.getMonth() + 1, maxChangeDate.getDate());
 
         for (let i = 0; i < firstDay; i++) {
             const emptyCell = document.createElement('div');
             emptyCell.className = 'calendar-day empty';
             calendarBody.appendChild(emptyCell);
-        }
-
-        const next5Days = [];
-        for (let i = 1; i <= 5; i++) {
-            const nextDay = new Date(today);
-            nextDay.setDate(today.getDate() + i);
-            next5Days.push(nextDay.toISOString().split('T')[0]);
         }
 
         for (let day = 1; day <= totalDays; day++) {
@@ -337,10 +363,14 @@ function initFuncionarioCalendar() {
                     `;
                     cell.appendChild(turnoDiv);
                     
-                    if (next5Days.includes(dateStr)) {
-                        cell.classList.add('available-for-change');
-                        cell.dataset.shiftDate = dateStr;
-                        cell.dataset.shiftDetails = `${turno.area} - ${turno.horario}`;
+                    // Mostrar botón SOLO en el día actual
+                    if (dateStr === currentDateStr) {
+                        const changeBtn = document.createElement('button');
+                        changeBtn.className = 'btn-change-shift';
+                        changeBtn.innerHTML = 'Solicitar Cambio';
+                        changeBtn.dataset.shiftDate = dateStr;
+                        changeBtn.dataset.shiftDetails = `${turno.area} - ${turno.horario}`;
+                        turnoDiv.appendChild(changeBtn);
                     }
                 });
             }
@@ -348,25 +378,10 @@ function initFuncionarioCalendar() {
             calendarBody.appendChild(cell);
         }
 
-        document.querySelectorAll('.calendar-day.available-for-change').forEach(dayCell => {
-            dayCell.addEventListener('click', function() {
-                const shiftDate = this.dataset.shiftDate;
-                const shiftDetails = this.dataset.shiftDetails;
-                
-                document.getElementById('originalShiftDate').value = shiftDate;
-                document.getElementById('originalShiftDetails').value = shiftDetails;
-                
-                const tomorrow = new Date();
-                tomorrow.setDate(tomorrow.getDate() + 1);
-                document.getElementById('newShiftDate').min = tomorrow.toISOString().split('T')[0];
-                
-                document.getElementById('shiftChangeForm').style.display = 'block';
-                document.getElementById('shiftChangeForm').scrollIntoView({ behavior: 'smooth' });
-            });
-        });
+        // Configurar el formulario con el rango de fechas permitido
+        setupShiftChangeForm(currentDateStr, maxChangeDateStr);
     }
 
-    // ... (resto del código de funcionario se mantiene igual)
     function setupFuncionarioEventListeners() {
         document.getElementById('prevMonth').addEventListener('click', () => {
             currentMonth = currentMonth === 1 ? 12 : currentMonth - 1;
@@ -413,6 +428,7 @@ function initFuncionarioCalendar() {
                 <div class="form-group">
                     <label for="newShiftDate">Nueva fecha propuesta:</label>
                     <input type="date" id="newShiftDate" required>
+                    <div class="date-range-info"></div>
                 </div>
                 <div class="form-group">
                     <label for="newShiftTime">Nuevo horario propuesto:</label>
@@ -445,6 +461,16 @@ function initFuncionarioCalendar() {
         
         document.getElementById('checkAvailability').addEventListener('click', checkShiftAvailability);
         document.getElementById('shiftChangeRequest').addEventListener('submit', submitShiftChangeRequest);
+    }
+
+    function setupShiftChangeForm(minDateStr, maxDateStr) {
+        const form = document.getElementById('shiftChangeForm');
+        if (!form) return;
+        
+        form.querySelector('#newShiftDate').min = minDateStr;
+        form.querySelector('#newShiftDate').max = maxDateStr;
+        form.querySelector('.date-range-info').textContent = 
+            `(Puede seleccionar fechas entre ${formatDisplayDate(minDateStr)} y ${formatDisplayDate(maxDateStr)})`;
     }
 
     function checkShiftAvailability() {
@@ -492,30 +518,5 @@ function initFuncionarioCalendar() {
         console.log('Solicitud enviada:', { originalDate, newDate, newTime, reason });
         showNotification('Solicitud de cambio enviada al coordinador');
         document.getElementById('shiftChangeForm').style.display = 'none';
-    }
-
-    function showNotification(message, isError = false) {
-        const notification = document.createElement('div');
-        notification.className = `notification ${isError ? 'error' : ''}`;
-        notification.innerHTML = `
-            ${message}
-            <span class="notification-close">×</span>
-        `;
-        
-        document.body.appendChild(notification);
-        
-        setTimeout(() => notification.classList.remove('hidden'), 10);
-        
-        notification.querySelector('.notification-close').addEventListener('click', () => {
-            notification.classList.add('hidden');
-            setTimeout(() => notification.remove(), 300);
-        });
-        
-        setTimeout(() => {
-            if (notification.parentNode) {
-                notification.classList.add('hidden');
-                setTimeout(() => notification.remove(), 300);
-            }
-        }, 5000);
     }
 }

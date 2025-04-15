@@ -81,6 +81,11 @@ function initCoordinadorCalendar() {
         const firstDay = getFirstDayOfMonth(month, year);
         const totalDays = daysInMonth(month, year);
 
+        // Obtener fecha actual
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const currentDateStr = formatDate(today.getFullYear(), today.getMonth() + 1, today.getDate());
+
         for (let i = 0; i < firstDay; i++) {
             const emptyCell = document.createElement('div');
             emptyCell.className = 'calendar-day empty';
@@ -91,6 +96,12 @@ function initCoordinadorCalendar() {
             const dateStr = formatDate(year, month, day);
             const cell = document.createElement('div');
             cell.className = 'calendar-day';
+            
+            // Resaltar día actual
+            if (dateStr === currentDateStr) {
+                cell.classList.add('current-day');
+            }
+            
             cell.innerHTML = `<div class="day-number">${day}</div>`;
 
             if (turnos[dateStr] && turnos[dateStr].length > 0) {
@@ -110,6 +121,7 @@ function initCoordinadorCalendar() {
         }
     }
 
+    // ... (resto del código de coordinador se mantiene igual)
     function setupCoordinadorEventListeners() {
         document.getElementById('prevMonth').addEventListener('click', () => {
             currentMonth = currentMonth === 1 ? 12 : currentMonth - 1;
@@ -284,16 +296,18 @@ function initFuncionarioCalendar() {
         const firstDay = getFirstDayOfMonth(month, year);
         const totalDays = daysInMonth(month, year);
 
+        // Obtener fecha actual
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const currentDateStr = formatDate(today.getFullYear(), today.getMonth() + 1, today.getDate());
+
         for (let i = 0; i < firstDay; i++) {
             const emptyCell = document.createElement('div');
             emptyCell.className = 'calendar-day empty';
             calendarBody.appendChild(emptyCell);
         }
 
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
         const next5Days = [];
-        
         for (let i = 1; i <= 5; i++) {
             const nextDay = new Date(today);
             nextDay.setDate(today.getDate() + i);
@@ -304,6 +318,12 @@ function initFuncionarioCalendar() {
             const dateStr = formatDate(year, month, day);
             const cell = document.createElement('div');
             cell.className = 'calendar-day';
+            
+            // Resaltar día actual
+            if (dateStr === currentDateStr) {
+                cell.classList.add('current-day');
+            }
+            
             cell.innerHTML = `<div class="day-number">${day}</div>`;
 
             const turnosDia = filteredTurnos.filter(t => t.fecha === dateStr);
@@ -346,6 +366,7 @@ function initFuncionarioCalendar() {
         });
     }
 
+    // ... (resto del código de funcionario se mantiene igual)
     function setupFuncionarioEventListeners() {
         document.getElementById('prevMonth').addEventListener('click', () => {
             currentMonth = currentMonth === 1 ? 12 : currentMonth - 1;

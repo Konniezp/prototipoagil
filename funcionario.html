@@ -66,47 +66,48 @@
         
         <div class="calendar-grid" id="calendarBody"></div>
         
-        <!-- Formulario de cambio de turno -->
-        <div class="change-shift-form" id="shiftChangeForm" style="display: none;">
-            <div class="change-shift-form">
+        <!-- Modal para cambio de turno -->
+        <div id="shiftChangeModal" class="modal" style="display: none;">
+            <div class="modal-content">
+                <span class="close-modal">&times;</span>
                 <h3>Solicitud de Cambio de Turno</h3>
-                <span class="close-form" id="closeShiftForm">×</span>
-                <p class="date-range-info"></p>
-                <form id="shiftChangeRequest">
+                <form id="shiftChangeForm">
                     <div class="form-group">
                         <label for="originalShiftDate">Fecha de turno original:</label>
                         <input type="text" id="originalShiftDate" readonly>
                     </div>
                     <div class="form-group">
-                        <label for="originalShiftDetails">Detalles del turno original:</label>
+                        <label for="originalShiftDetails">Detalles del turno:</label>
                         <input type="text" id="originalShiftDetails" readonly>
                     </div>
                     <div class="form-group">
-                        <label for="newShiftDate">Nueva fecha propuesta:</label>
+                        <label for="newShiftDate">Nueva fecha:</label>
                         <input type="date" id="newShiftDate" required>
+                        <small class="date-range-info"></small>
                     </div>
                     <div class="form-group">
-                        <label for="newShiftTime">Nuevo horario propuesto:</label>
+                        <label for="newShiftTime">Nuevo horario:</label>
                         <select id="newShiftTime" required>
-                            <option value="">Seleccione un horario</option>
+                            <option value="">Seleccione horario</option>
                             <option value="08:00 - 16:00">08:00 - 16:00</option>
                             <option value="16:00 - 00:00">16:00 - 00:00</option>
                             <option value="00:00 - 08:00">00:00 - 08:00</option>
                         </select>
                     </div>
                     <div class="form-group">
-                        <label for="changeReason">Motivo del cambio (máx. 200 caracteres):</label>
+                        <label for="changeReason">Motivo (máx. 200 caracteres):</label>
                         <textarea id="changeReason" maxlength="200" required></textarea>
                         <div class="char-counter"><span id="charCount">200</span> caracteres restantes</div>
                     </div>
-                    <div id="availabilityCheck" class="availability-check" style="display: none;"></div>
+                    <div id="availabilityCheck" class="availability-check"></div>
                     <div class="form-actions">
-                        <button type="button" id="checkAvailability" class="btn btn-small">Verificar Disponibilidad</button>
+                        <button type="button" id="checkAvailabilityBtn" class="btn btn-small">Verificar Disponibilidad</button>
                         <button type="submit" class="btn">Enviar Solicitud</button>
                     </div>
                 </form>
             </div>
         </div>
+        
         <!-- Sección de información sobre cambios de turno -->
         <div class="shift-change-info">
             <p><strong>Nota:</strong> Puedes solicitar cambios de turno solo para el día actual. Los días disponibles aparecerán resaltados en el calendario.</p>

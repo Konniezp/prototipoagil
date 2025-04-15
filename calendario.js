@@ -23,14 +23,31 @@ function getFirstDayOfMonth(month, year) {
 }
 
 function showNotification(message, isError = false) {
-    const notification = document.getElementById('notification');
-    notification.textContent = message;
+    const notification = document.createElement('div');
     notification.className = `notification ${isError ? 'error' : ''}`;
-    notification.classList.remove('hidden');
-
+    notification.innerHTML = `
+        ${message}
+        <span class="notification-close">×</span>
+    `;
+    document.body.appendChild(notification);
+    
     setTimeout(() => {
-        if (!notification.classList.contains('hidden')) {
-            notification.classList.add('hidden');
+        notification.classList.add('show');
+    }, 10);
+    
+    notification.querySelector('.notification-close').addEventListener('click', () => {
+        notification.classList.remove('show');
+        setTimeout(() => {
+            notification.remove();
+        }, 300);
+    });
+    
+    setTimeout(() => {
+        if (notification.parentNode) {
+            notification.classList.remove('show');
+            setTimeout(() => {
+                notification.remove();
+            }, 300);
         }
     }, 5000);
 }
@@ -65,6 +82,328 @@ function highlightActiveLink() {
     }
 }
 
+// ===== CÓDIGO PARA FUNCIONARIO =====
+function initFuncionarioCalendar() {
+    const funcionarioId = 1;
+    const funcionarioActual = funcionarios.find(f => f.id === funcionarioId);
+    let currentMonth = new Date().getMonth() + 1;
+    let currentYear = new Date().getFullYear();
+
+    // Datos de ejemplo para los turnos del funcionario actual
+    const misTurnos = [
+        { fecha: getCurrentDateFormatted(), area: "Urgencias", horario: "08:00 - 16:00" },
+        { fecha: getDateFormatted(5), area: "Urgencias", horario: "16:00 - 00:00" },
+        { fecha: getDateFormatted(10), area: "Urgencias", horario: "16:00 - 00:00" },
+        { fecha: getDateFormatted(15), area: "Urgencias", horario: "08:00 - 16:00" },
+        { fecha: getDateFormatted(20), area: "Urgencias", horario: "00:00 - 08:00" }
+    ];
+
+    // Datos de ejemplo para turnos existentes de otros funcionarios
+    const allShifts = [
+        { fecha: getDateFormatted(2), area: "Urgencias", horario: "08:00 - 16:00", funcionario: "Ana Silva" },
+        { fecha: getDateFormatted(3), area: "Urgencias", horario: "08:00 - 16:00", funcionario: "Carlos López" },
+        { fecha: getDateFormatted(4), area: "Urgencias", horario: "16:00 - 00:00", funcionario: "María Gómez" },
+        { fecha: getDateFormatted(6), area: "Urgencias", horario: "08:00 - 16:00", funcionario: "Juan Pérez" },
+        { fecha: getDateFormatted(7), area: "Urgencias", horario: "00:00 - 08:00", funcionario: "Pedro Sánchez" }
+    ];
+
+    // Funciones auxiliares para generar fechas de ejemplo
+    function getCurrentDateFormatted() {
+        const today = new Date();
+        return formatDate(today.getFullYear(), today.getMonth() + 1, today.getDate());
+    }
+
+    function getDateFormatted(daysFromToday) {
+        const date = new Date();
+        date.setDate(date.getDate() + daysFromToday);
+        return formatDate(date.getFullYear(), date.getMonth() + 1, date.getDate());
+    }
+
+    document.getElementById('nombreFuncionario').textContent = funcionarioActual.nombre;
+    document.getElementById('rutFuncionario').textContent = funcionarioActual.rut;
+    
+    updateFuncionarioCalendar(currentMonth, currentYear);
+    setupFuncionarioEventListeners();
+
+    function updateFuncionarioCalendar(month, year) {
+        const monthNames = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", 
+                          "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
+        document.getElementById('currentMonth').textContent = `${monthNames[month - 1]} ${year}`;
+
+        const calendarBody = document.getElementById('calendarBody');
+        calendarBody.innerHTML = '';
+
+        const selectedArea = document.getElementById('areaFilter').value;
+        let filteredTurnos = misTurnos.filter(t => {
+            const turnoMonth = parseInt(t.fecha.split('-')[1]);
+            return turnoMonth === month && (selectedArea === '' || t.area === selectedArea);
+        });
+
+        const daysOfWeek = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"];
+        daysOfWeek.forEach(day => {
+            const header = document.createElement('div');
+            header.className = 'day-header';
+            header.textContent = day;
+            calendarBody.appendChild(header);
+        });
+
+        const firstDay = getFirstDayOfMonth(month, year);
+        const totalDays = daysInMonth(month, year);
+
+        // Obtener fecha actual y rango de fechas permitidas (hoy + 5 días siguientes)
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const currentDateStr = formatDate(today.getFullYear(), today.getMonth() + 1, today.getDate());
+        
+        const maxChangeDate = new Date(today);
+        maxChangeDate.setDate(today.getDate() + 5);
+        const maxChangeDateStr = formatDate(maxChangeDate.getFullYear(), maxChangeDate.getMonth() + 1, maxChangeDate.getDate());
+
+        for (let i = 0; i < firstDay; i++) {
+            const emptyCell = document.createElement('div');
+            emptyCell.className = 'calendar-day empty';
+            calendarBody.appendChild(emptyCell);
+        }
+
+        for (let day = 1; day <= totalDays; day++) {
+            const dateStr = formatDate(year, month, day);
+            const cell = document.createElement('div');
+            cell.className = 'calendar-day';
+            
+            // Resaltar día actual
+            if (dateStr === currentDateStr) {
+                cell.classList.add('current-day');
+            }
+            
+            cell.innerHTML = `<div class="day-number">${day}</div>`;
+
+            const turnosDia = filteredTurnos.filter(t => t.fecha === dateStr);
+            if (turnosDia.length > 0) {
+                turnosDia.forEach(turno => {
+                    const turnoDiv = document.createElement('div');
+                    turnoDiv.className = 'my-shift';
+                    turnoDiv.innerHTML = `
+                        <p><strong>${turno.area}</strong></p>
+                        <p>${turno.horario}</p>
+                    `;
+                    cell.appendChild(turnoDiv);
+                    
+                    // Mostrar botón SOLO en el día actual
+                    if (dateStr === currentDateStr) {
+                        const changeBtn = document.createElement('button');
+                        changeBtn.className = 'btn-change-shift';
+                        changeBtn.innerHTML = 'Solicitar Cambio';
+                        changeBtn.dataset.shiftDate = dateStr;
+                        changeBtn.dataset.shiftDetails = `${turno.area} - ${turno.horario}`;
+                        turnoDiv.appendChild(changeBtn);
+                        
+                        changeBtn.addEventListener('click', function() {
+                            const shiftDate = this.dataset.shiftDate;
+                            const shiftDetails = this.dataset.shiftDetails;
+                            
+                            document.getElementById('originalShiftDate').value = shiftDate;
+                            document.getElementById('originalShiftDetails').value = shiftDetails;
+                            
+                            // Configurar el rango de fechas permitidas
+                            const tomorrow = new Date();
+                            tomorrow.setDate(tomorrow.getDate() + 1);
+                            document.getElementById('newShiftDate').min = tomorrow.toISOString().split('T')[0];
+                            document.getElementById('newShiftDate').max = maxChangeDateStr;
+                            
+                            document.getElementById('shiftChangeForm').style.display = 'block';
+                            document.getElementById('shiftChangeForm').scrollIntoView({ behavior: 'smooth' });
+                        });
+                    }
+                });
+            }
+
+            // Marcar días disponibles para cambio (hoy + 5 días siguientes)
+            const dateObj = new Date(year, month - 1, day);
+            if (dateObj >= today && dateObj <= maxChangeDate) {
+                cell.classList.add('available-for-change');
+                
+                // Agregar indicador visual
+                const indicator = document.createElement('div');
+                indicator.className = 'change-indicator';
+                indicator.textContent = 'Cambio disponible';
+                cell.appendChild(indicator);
+                
+                // Hacer clicable para sugerir cambio
+                cell.addEventListener('click', function() {
+                    if (dateStr !== currentDateStr) {
+                        showNotification(`Puede solicitar cambio para este día (${day}/${month}/${year})`, false);
+                    }
+                });
+            }
+
+            calendarBody.appendChild(cell);
+        }
+    }
+
+    function setupFuncionarioEventListeners() {
+        document.getElementById('prevMonth').addEventListener('click', () => {
+            currentMonth = currentMonth === 1 ? 12 : currentMonth - 1;
+            currentYear = currentMonth === 12 ? currentYear - 1 : currentYear;
+            updateFuncionarioCalendar(currentMonth, currentYear);
+        });
+
+        document.getElementById('nextMonth').addEventListener('click', () => {
+            currentMonth = currentMonth === 12 ? 1 : currentMonth + 1;
+            currentYear = currentMonth === 1 ? currentYear + 1 : currentYear;
+            updateFuncionarioCalendar(currentMonth, currentYear);
+        });
+
+        document.getElementById('monthSelector').addEventListener('change', function() {
+            currentMonth = parseInt(this.value);
+            updateFuncionarioCalendar(currentMonth, currentYear);
+        });
+        
+        document.getElementById('areaFilter').addEventListener('change', function() {
+            updateFuncionarioCalendar(currentMonth, currentYear);
+        });
+        
+        document.getElementById('resetFilters').addEventListener('click', function() {
+            document.getElementById('areaFilter').value = '';
+            updateFuncionarioCalendar(currentMonth, currentYear);
+        });
+    }
+
+    function createShiftChangeForm() {
+        const form = document.createElement('div');
+        form.className = 'change-shift-form';
+        form.id = 'shiftChangeForm';
+        form.style.display = 'none';
+        form.innerHTML = `
+            <h3>Solicitud de Cambio de Turno</h3>
+            <form id="shiftChangeRequest">
+                <div class="form-group">
+                    <label for="originalShiftDate">Fecha de turno original:</label>
+                    <input type="text" id="originalShiftDate" readonly>
+                </div>
+                <div class="form-group">
+                    <label for="originalShiftDetails">Detalles del turno original:</label>
+                    <input type="text" id="originalShiftDetails" readonly>
+                </div>
+                <div class="form-group">
+                    <label for="newShiftDate">Nueva fecha propuesta:</label>
+                    <input type="date" id="newShiftDate" required>
+                    <p class="date-range-info">(Puede seleccionar fechas entre mañana y 5 días a partir de hoy)</p>
+                </div>
+                <div class="form-group">
+                    <label for="newShiftTime">Nuevo horario propuesto:</label>
+                    <select id="newShiftTime" required>
+                        <option value="">Seleccione un horario</option>
+                        <option value="08:00 - 16:00">08:00 - 16:00</option>
+                        <option value="16:00 - 00:00">16:00 - 00:00</option>
+                        <option value="00:00 - 08:00">00:00 - 08:00</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="changeReason">Motivo del cambio (máx. 200 caracteres):</label>
+                    <textarea id="changeReason" maxlength="200" required></textarea>
+                    <div class="char-counter"><span id="charCount">200</span> caracteres restantes</div>
+                </div>
+                <div id="availabilityCheck" class="availability-check" style="display: none;"></div>
+                <div class="form-actions">
+                    <button type="button" id="checkAvailability" class="btn btn-small">Verificar Disponibilidad</button>
+                    <button type="submit" class="btn">Enviar Solicitud</button>
+                    <button type="button" id="cancelRequest" class="btn btn-cancel">Cancelar</button>
+                </div>
+            </form>
+        `;
+        
+        document.querySelector('.calendar-container').appendChild(form);
+        
+        document.getElementById('changeReason').addEventListener('input', function() {
+            const remaining = 200 - this.value.length;
+            document.getElementById('charCount').textContent = remaining;
+        });
+        
+        document.getElementById('checkAvailability').addEventListener('click', checkShiftAvailability);
+        document.getElementById('shiftChangeRequest').addEventListener('submit', submitShiftChangeRequest);
+        document.getElementById('cancelRequest').addEventListener('click', function() {
+            document.getElementById('shiftChangeForm').style.display = 'none';
+        });
+    }
+
+    function checkShiftAvailability() {
+        const newDate = document.getElementById('newShiftDate').value;
+        const newTime = document.getElementById('newShiftTime').value;
+        const availabilityCheck = document.getElementById('availabilityCheck');
+        
+        if (!newDate || !newTime) {
+            showNotification('Por favor seleccione fecha y horario', true);
+            return;
+        }
+        
+        const originalDate = document.getElementById('originalShiftDate').value;
+        if (newDate === originalDate) {
+            availabilityCheck.style.display = 'block';
+            availabilityCheck.textContent = 'No puede seleccionar la misma fecha del turno original';
+            availabilityCheck.className = 'availability-check unavailable';
+            return;
+        }
+        
+        const isAvailable = !allShifts.some(shift => 
+            shift.fecha === newDate && shift.horario === newTime
+        );
+        
+        availabilityCheck.style.display = 'block';
+        
+        if (isAvailable) {
+            availabilityCheck.textContent = 'Turno disponible. No hay conflictos con otros turnos.';
+            availabilityCheck.className = 'availability-check available';
+        } else {
+            const conflictingShift = allShifts.find(shift => 
+                shift.fecha === newDate && shift.horario === newTime
+            );
+            availabilityCheck.textContent = `Turno no disponible. Ya asignado a ${conflictingShift.funcionario}.`;
+            availabilityCheck.className = 'availability-check unavailable';
+        }
+    }
+
+    function submitShiftChangeRequest(e) {
+        e.preventDefault();
+        
+        const availabilityCheck = document.getElementById('availabilityCheck');
+        if (availabilityCheck.classList.contains('unavailable')) {
+            showNotification('No puede solicitar un turno que ya está asignado', true);
+            return;
+        }
+        
+        const originalDate = document.getElementById('originalShiftDate').value;
+        const newDate = document.getElementById('newShiftDate').value;
+        const newTime = document.getElementById('newShiftTime').value;
+        const reason = document.getElementById('changeReason').value;
+        
+        if (originalDate === newDate) {
+            showNotification('No puede solicitar cambio para la misma fecha', true);
+            return;
+        }
+        
+        if (!newDate || !newTime || !reason) {
+            showNotification('Por favor complete todos los campos', true);
+            return;
+        }
+        
+        console.log('Solicitud enviada:', { 
+            originalDate, 
+            newDate, 
+            newTime, 
+            reason,
+            funcionario: funcionarioActual.nombre
+        });
+        
+        showNotification('Solicitud de cambio enviada al coordinador');
+        document.getElementById('shiftChangeForm').style.display = 'none';
+        
+        // Resetear el formulario
+        document.getElementById('shiftChangeRequest').reset();
+        document.getElementById('charCount').textContent = '200';
+        availabilityCheck.style.display = 'none';
+        availabilityCheck.className = 'availability-check';
+    }
+}
 // ===== CÓDIGO PARA COORDINADOR =====
 function initCoordinadorCalendar() {
     let turnos = {};

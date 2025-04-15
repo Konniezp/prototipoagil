@@ -163,6 +163,36 @@ body {
     background-color: #c0392b;
 }
 
+/* ESTILOS PARA BOTÓN DE CAMBIO */
+.btn-change-shift {
+    display: block;
+    width: 100%;
+    padding: 0.4rem;
+    margin-top: 0.5rem;
+    background-color: #f39c12;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-change-shift:hover {
+    background-color: #e67e22;
+    transform: translateY(-1px);
+}
+
+/* ESTILOS PARA FORMULARIO */
+.change-shift-form .date-range-info {
+    font-size: 0.85rem;
+    color: #7f8c8d;
+    margin-top: -0.5rem;
+    margin-bottom: 1rem;
+    display: block;
+}
+
+
 /* Filtros */
 .filters-container {
     display: flex;

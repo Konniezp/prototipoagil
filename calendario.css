@@ -574,4 +574,60 @@ footer {
     .btn {
         width: 100%;
     }
+    /* Añadir al final del archivo CSS */
+
+/* Contenedor de notificaciones */
+.notification-container {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+/* Mejoras para el modal */
+.modal-content {
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+/* Mejoras para el formulario */
+#shiftChangeForm {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.form-group textarea {
+    min-height: 100px;
+    resize: vertical;
+    font-family: inherit;
+}
+
+/* Estilos para días disponibles para cambio */
+.calendar-day.available-for-change {
+    background-color: #e8f8f5;
+    cursor: pointer;
+    position: relative;
+}
+
+.calendar-day.available-for-change:hover {
+    background-color: #d1f2eb;
+}
+
+/* Estilos para turnos en los próximos 5 días */
+.upcoming-shift {
+    border-left: 3px solid #f39c12;
+    background-color: #fef9e7;
+}
+
+.upcoming-shift .btn-change-shift {
+    background-color: #f39c12;
+}
+
+.upcoming-shift .btn-change-shift:hover {
+    background-color: #e67e22;
+}
 }

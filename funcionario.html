@@ -108,11 +108,26 @@
             </div>
         </div>
         
+        <!-- Modal de confirmación -->
+        <div id="confirmationModal" class="modal" style="display: none;">
+            <div class="modal-content">
+                <span class="close-modal">&times;</span>
+                <h3>Solicitud Enviada</h3>
+                <p id="confirmationMessage"></p>
+                <div class="form-actions">
+                    <button type="button" class="btn" id="confirmCloseBtn">Aceptar</button>
+                </div>
+            </div>
+        </div>
+        
         <!-- Sección de información sobre cambios de turno -->
         <div class="shift-change-info">
-            <p><strong>Nota:</strong> Puedes solicitar cambios de turno solo para el día actual. Los días disponibles aparecerán resaltados en el calendario.</p>
+            <p><strong>Nota:</strong> Puedes solicitar cambios de turno solo para los próximos 5 días. Los días disponibles aparecerán resaltados en el calendario.</p>
         </div>
     </div>
+
+    <!-- Contenedor de notificaciones -->
+    <div id="notificationContainer" class="notification-container"></div>
 
     <script src="calendario.js"></script>
 </body>
